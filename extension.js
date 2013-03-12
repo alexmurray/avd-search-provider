@@ -163,7 +163,6 @@ function enable () {
 function disable() {
     if (provider) {
         Main.overview.removeSearchProvider(provider);
-        provider._monitor.cancel();
         provider = null;
     }
 }
