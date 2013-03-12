@@ -29,23 +29,33 @@ const Params = imports.misc.params;
 const Util = imports.misc.util;
 const FileUtils = imports.misc.fileUtils;
 const Lang = imports.lang;
-
-const ANDROID_SDK_PATH =  GLib.build_filenamev([GLib.get_home_dir(), '/android-sdk-linux']);
+const ExtensionUtils = imports.misc.extensionUtils;
+const Me = ExtensionUtils.getCurrentExtension();
+const Lib = Me.imports.lib;
 
 let provider = null;
+
 const AVDSearchProvider = new Lang.Class({
     Name: 'AVDSearchProvider',
     Extends: Search.SearchProvider,
 
     _init: function (name) {
         this.parent('ANDROID VIRTUAL DEVICES');
+        if (!GLib.file_test(GLib.build_filenamev([Lib.getAndroidSDKPath(),
+                                                  'tools', 'android']),
+                            GLib.FileTest.EXISTS)) {
+            // TODO: spawn gnome shell prefs for us to allow user to
+            // set the correct path
+            log('Invalid path to Android SDK: ' + Lib.getAndroidSDKPath());
+        }
     },
 
     // FIXME: do this asynchronously like in
     // /usr/share/gnome-shell/js/ui/networkAgent.js - this means we
     // would only support GNOME 3.6
     _getAVDS: function () {
-        let android = GLib.build_filenamev([ANDROID_SDK_PATH, 'tools', 'android']);
+        let android = GLib.build_filenamev([Lib.getAndroidSDKPath(),
+                                            'tools', 'android']);
         let avds = [];
         let [ret, out, err, error] =
                 GLib.spawn_sync(null, // pwd
@@ -61,7 +71,7 @@ const AVDSearchProvider = new Lang.Class({
                 avds.push({ name: match[1] });
             }
         } else {
-            global.log('Error executing "' + android + ' list avds": ' + error + '\n. Please ensure the extension configured with the correct path to the Android SDK');
+            log('Error executing "' + android + ' list avds": ' + error + '\n. Please ensure the extension configured with the correct path to the Android SDK');
         }
         return avds;
     },
@@ -70,7 +80,8 @@ const AVDSearchProvider = new Lang.Class({
         return { id: id,
                  name: id.name,
                  createIcon: Lang.bind(this, function (size) {
-                     const icon_path = GLib.build_filenamev([ANDROID_SDK_PATH, 'tools',
+                     const icon_path = GLib.build_filenamev([Lib.getAndroidSDKPath(),
+                                                             'tools',
                                                              'apps', 'SdkController', 'res', 'drawable-xhdpi', 'ic_launcher.png']);
                      let icon_file = Gio.file_new_for_path(icon_path);
                      let gicon = new Gio.FileIcon({file: icon_file});
@@ -93,7 +104,9 @@ const AVDSearchProvider = new Lang.Class({
     },
 
     activateResult: function (id) {
-        Util.spawn([ GLib.build_filenamev([ANDROID_SDK_PATH, 'tools', 'emulator']), '@' + id.name ]);
+        Util.spawn([ GLib.build_filenamev([Lib.getAndroidSDKPath(),
+                                           'tools', 'emulator']),
+                     '@' + id.name ]);
     },
 
     dragActivateResult: function(id, params) {

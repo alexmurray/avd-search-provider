@@ -1,0 +1,9 @@
+<schemalist gettext-domain="avd-search-provider">
+  <schema id="com.github.alexmurray.avd-search-provider" path="/com/github/alexmurray/avd-searh-provider/">
+    <key name="android-sdk-path" type="s">
+      <default>"android-sdk-linux"</default>
+      <summary>The path to the Android SDK</summary>
+      <description>The path to the android-sdk-linux folder which contains the Android SDK</description>
+    </key>
+  </schema>
+</schemalist>
