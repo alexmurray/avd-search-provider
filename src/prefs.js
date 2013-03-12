@@ -31,15 +31,19 @@ function init() {
 function buildPrefsWidget() {
     let frame = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL,
                               border_width: 10});
+    let box = new Gtk.Box({ orientation: Gtk.Orientation.HORIZONTAL });
 
     // We only have one setting - the path to the SDK
+    let label = new Gtk.Label({ label: 'Android SDK Path' });
     let button = new Gtk.FileChooserButton({ title: 'Android SDK Path',
 					     action: Gtk.FileChooserAction.SELECT_FOLDER });
     button.set_filename(Lib.getAndroidSDKPath());
     button.connect('file-set', function (button) {
         Lib.setAndroidSDKPath(button.get_filename());
     });
-    frame.add(button);
+    box.pack_start(label, false, true, 10);
+    box.pack_start(button, true, true, 10);
+    frame.add(box);
     frame.show_all();
 
     return frame;
