@@ -19,6 +19,7 @@
  */
 
 const Main = imports.ui.main;
+const MessageTray = imports.ui.messageTray;
 const Search = imports.ui.search;
 const Clutter = imports.gi.Clutter;
 const GLib = imports.gi.GLib;
@@ -41,12 +42,27 @@ const AVDSearchProvider = new Lang.Class({
 
     _init: function (name) {
         this.parent('ANDROID VIRTUAL DEVICES');
+        // TODO: integrate the concept of configured correctly or not
+        // as a core part of the extension so we can notify more
+        // readily when misconfigured
         if (!GLib.file_test(GLib.build_filenamev([Lib.getAndroidSDKPath(),
                                                   'tools', 'android']),
                             GLib.FileTest.EXISTS)) {
-            // TODO: spawn gnome shell prefs for us to allow user to
-            // set the correct path
-            log('Invalid path to Android SDK: ' + Lib.getAndroidSDKPath());
+            // show notification which allows the extension to be configured
+            let source = new MessageTray.Source('Android Virtual Device Search Provider Extension',
+                                                'gtk-warning');
+            let notification = new MessageTray.Notification(source,
+                                                            'Configuration Required',
+                                                            'Android Virtual Device Search Provider Extension requires the location of the Android SDK to be configured before it can be used');
+            notification.addButton('preferences', 'Configure');
+            notification.connect('action-invoked', function (self, action) {
+                let appSys = Shell.AppSystem.get_default();
+                let app = appSys.lookup_app('gnome-shell-extension-prefs.desktop');
+                app.launch(global.display.get_current_time_roundtrip(),
+                           ['extension:///' + 'avd-search-provider@alexmurray.github.com'], -1, null);
+            });
+            Main.messageTray.add(source);
+            source.notify(notification);
         }
     },
 
