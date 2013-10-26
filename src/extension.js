@@ -18,9 +18,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+const IconGrid = imports.ui.iconGrid;
 const Main = imports.ui.main;
 const MessageTray = imports.ui.messageTray;
-const Search = imports.ui.search;
 const Clutter = imports.gi.Clutter;
 const GLib = imports.gi.GLib;
 const Gio = imports.gi.Gio;
@@ -36,12 +36,41 @@ const Lib = Me.imports.lib;
 
 let provider = null;
 
+const AVDIconBin = new Lang.Class({
+    Name: 'AVDIconBin',
+
+    _init: function(protocol, name) {
+        this.actor = new St.Bin({ reactive: true,
+                                  track_hover: true });
+        this._protocol = protocol;
+        this.icon = new IconGrid.BaseIcon(name,
+                                          { showLabel: true,
+                                            createIcon: Lang.bind(this, this.createIcon) } );
+
+        this.actor.child = this.icon.actor;
+        this.actor.label_actor = this.icon.label;
+    },
+
+    createIcon: function (size) {
+        let box = new Clutter.Box();
+        const icon_path = GLib.build_filenamev([Lib.getAndroidSDKPath(),
+                                                'tools',
+                                                'apps', 'SdkController', 'res', 'drawable-xhdpi', 'ic_launcher.png']);
+        let icon_file = Gio.file_new_for_path(icon_path);
+        let gicon = new Gio.FileIcon({file: icon_file});
+        let icon = new St.Icon({ gicon: gicon,
+                             icon_size: size});
+        box.add_child(icon);
+        return box;
+    }
+});
+
 const AVDSearchProvider = new Lang.Class({
     Name: 'AVDSearchProvider',
-    Extends: Search.SearchProvider,
 
     _init: function (name) {
-        this.parent('ANDROID VIRTUAL DEVICES');
+        this.id = 'avd-search-provider';
+
         // TODO: integrate the concept of configured correctly or not
         // as a core part of the extension so we can notify more
         // readily when misconfigured
@@ -92,31 +121,19 @@ const AVDSearchProvider = new Lang.Class({
         return avds;
     },
 
+    createResultActor: function (result, terms) {
+        let icon = new AVDIconBin(result.id.protocol, result.name);
+        return icon.actor;
+    },
+
     getResultMeta: function (id) {
         return { id: id,
-                 name: id.name,
-                 createIcon: Lang.bind(this, function (size) {
-                     const icon_path = GLib.build_filenamev([Lib.getAndroidSDKPath(),
-                                                             'tools',
-                                                             'apps', 'SdkController', 'res', 'drawable-xhdpi', 'ic_launcher.png']);
-                     let icon_file = Gio.file_new_for_path(icon_path);
-                     let gicon = new Gio.FileIcon({file: icon_file});
-                     return new St.Icon({ gicon: gicon,
-                                          icon_size: size});
-                 })
-               };
+                 name: id.name };
     },
 
     getResultMetas: function (ids, callback) {
         let metas = ids.map(this.getResultMeta, this);
-        // GNOME 3.5.1 or so introduced passing result asynchronously
-        // via callback so try that first - if it fails then simply
-        // return the results to stay compatible with 3.4
-        try {
-            callback(metas);
-        } finally {
-            return metas;
-        }
+        callback(metas);
     },
 
     activateResult: function (id) {
@@ -154,28 +171,15 @@ const AVDSearchProvider = new Lang.Class({
                 results.push(avd);
             }
         }
-        // GNOME 3.5.1 or so introduced passing result asynchronously
-        // via pushResults() so try that first - if it fails then
-        // simply return the results to stay compatible with 3.4
-        try {
-            this.searchSystem.pushResults(this, results);
-        } finally {
-            return results;
-        }
+        this.searchSystem.pushResults(this, results);
     },
 
     getInitialResultSet: function (terms) {
-        // GNOME 3.4 needs the results returned directly whereas 3.5.1
-        // etc will ignore this and instead need pushResults() from
-        // _getResultSet() above
-        return this._getResultSet(this._getAVDS(), terms);
+        this._getResultSet(this._getAVDS(), terms);
     },
 
     getSubsearchResultSet: function (results, terms) {
-        // GNOME 3.4 needs the results returned directly whereas 3.5.1
-        // etc will ignore this and instead need pushResults() from
-        // _getResultSet() above
-        return this._getResultSet(results, terms);
+        this._getResultSet(results, terms);
     }
 });
 

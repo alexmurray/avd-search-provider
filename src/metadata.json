@@ -1,5 +1,5 @@
 {
-    "shell-version": [ "3.6" ],
+    "shell-version": [ "3.8" ],
     "uuid": "avd-search-provider@alexmurray.github.com",
     "name": "Android Virtual Device Search Provider",
     "url": "https://github.com/alexmurray/avd-search-provider/",
