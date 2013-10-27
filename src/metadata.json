@@ -1,8 +1,8 @@
 {
-    "shell-version": [ "3.8" ],
+    "shell-version": [ "3.10" ],
     "uuid": "avd-search-provider@alexmurray.github.com",
     "name": "Android Virtual Device Search Provider",
     "url": "https://github.com/alexmurray/avd-search-provider/",
     "description": "Search for and launch Android Virtual Device's.",
-    "version": 2
+    "version": 3
 }

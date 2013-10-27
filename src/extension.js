@@ -95,9 +95,7 @@ const AVDSearchProvider = new Lang.Class({
         }
     },
 
-    // FIXME: do this asynchronously like in
-    // /usr/share/gnome-shell/js/ui/networkAgent.js - this means we
-    // would only support GNOME 3.6
+    // FIXME: do this asynchronously
     _getAVDS: function () {
         let android = GLib.build_filenamev([Lib.getAndroidSDKPath(),
                                             'tools', 'android']);
@@ -112,7 +110,6 @@ const AVDSearchProvider = new Lang.Class({
             let match;
             let re = RegExp('Name: (.*)', 'gi');
             while ((match = re.exec(out))) {
-
                 avds.push({ name: match[1] });
             }
         } else {
@@ -121,18 +118,21 @@ const AVDSearchProvider = new Lang.Class({
         return avds;
     },
 
-    createResultActor: function (result, terms) {
+    createResultObject: function (result, terms) {
         let icon = new AVDIconBin(result.id.protocol, result.name);
-        return icon.actor;
+        return icon;
     },
 
-    getResultMeta: function (id) {
-        return { id: id,
-                 name: id.name };
+    filterResults: function (results, max) {
+        return results.slice(0, max);
     },
 
     getResultMetas: function (ids, callback) {
-        let metas = ids.map(this.getResultMeta, this);
+        let metas = [];
+        for (let i = 0; i < ids.length; i++) {
+            let id = ids[i];
+            metas.push({ id: id, name: id.name });
+        }
         callback(metas);
     },
 
@@ -140,14 +140,6 @@ const AVDSearchProvider = new Lang.Class({
         Util.spawn([ GLib.build_filenamev([Lib.getAndroidSDKPath(),
                                            'tools', 'emulator']),
                      '@' + id.name ]);
-    },
-
-    dragActivateResult: function(id, params) {
-        params = Params.parse(params, { workspace: -1,
-                                        timestamp: global.get_current_time() });
-        let workspace = global.screen.get_workspace_by_index(params.workspace);
-        workspace.activate(params.timestamp);
-        this.activateResult(id);
     },
 
     _getResultSet: function (avds, terms) {
@@ -171,7 +163,7 @@ const AVDSearchProvider = new Lang.Class({
                 results.push(avd);
             }
         }
-        this.searchSystem.pushResults(this, results);
+        this.searchSystem.setResults(this, results);
     },
 
     getInitialResultSet: function (terms) {
