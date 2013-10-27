@@ -4,5 +4,5 @@
     "name": "Android Virtual Device Search Provider",
     "url": "https://github.com/alexmurray/avd-search-provider/",
     "description": "Search for and launch Android Virtual Device's.",
-    "version": 3
+    "version": 4
 }
